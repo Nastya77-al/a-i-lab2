@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тести - Бінарні дерева</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --secondary: #3b82f6;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --text: #374151;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--light);
+        }
+
+        /* Навігація */
+        nav {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--primary);
+        }
+
+        /* Контейнер тестів */
+        .tests-container {
+            max-width: 800px;
+            margin: 100px auto 50px;
+            padding: 0 2rem;
+        }
+
+        .test-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .test-header h1 {
+            font-size: 2.5rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .test-progress {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e5e7eb;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        /* Питання */
+        .question-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .question-card.answered {
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .question-card.correct::before {
+            content: '✓';
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 30px;
+            height: 30px;
+            background: var(--success);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .question-card.incorrect::before {
+            content: '✗';
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 30px;
+            height: 30px;
+            background: var(--error);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .question-number {
+            display: inline-block;
+            background: var(--gradient);
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .question-text {
+            font-size: 1.125rem;
+            color: var(--dark);
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .code-block {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .option {
+            background: var(--light);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option:hover {
+            background: white;
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .option.selected {
+            background: white;
+            border-color: var(--primary);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .option.correct {
+            background: #d1fae5;
+            border-color: var(--success);
+        }
+
+        .option.incorrect {
+            background: #fee2e2;
+            border-color: var(--error);
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .option-marker {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--text);
+        }
+
+        .option.selected .option-marker {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .explanation {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #f3f4f6;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+            display: none;
+        }
+
+        .explanation.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Кнопки */
+        .test-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 3rem;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text);
+            border: 2px solid #e5e7eb;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Результати */
+        .results-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .results-modal.show {
+            display: flex;
+        }
+
+        .results-content {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            animation: scaleIn 0.3s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .results-emoji {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .results-title {
+            font-size: 2rem;
+            color: var(--dark);
+            margin-bottom: 1rem;
+        }
+
+        .results-score {
+            font-size: 3rem;
+            font-weight: bold;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .results-message {
+            color: var(--text);
+            margin-bottom: 2rem;
+        }
+
+        .results-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .result-stat {
+            background: var(--light);
+            padding: 1rem;
+            border-radius: 10px;
+        }
+
+        .result-stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .result-stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--dark);
+        }
+
+        /* Селектор модулів */
+        .module-selector {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 3rem;
+        }
+
+        .module-selector h2 {
+            font-size: 1.5rem;
+            color: var(--dark);
+            margin-bottom: 1.5rem;
+        }
+
+        .module-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .module-btn {
+            background: var(--light);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .module-btn:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .module-btn.active {
+            background: white;
+            border-color: var(--primary);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .module-btn-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .module-btn-title {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* Адаптивність */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .test-header h1 {
+                font-size: 2rem;
+            }
+
+            .question-card {
+                padding: 1.5rem;
+            }
+
+            .results-content {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Навігація -->
+    <nav>
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <span>🌳</span>
+                <span>Binary Trees</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Головна</a></li>
+                <li><a href="theory.html">Теорія</a></li>
+                <li><a href="practice.html">Практика</a></li>
+                <li><a href="tests.html" class="active">Тести</a></li>
+                <li><a href="visualizer.html">Візуалізатор</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Контейнер тестів -->
+    <div class="tests-container">
+        <div class="test-header">
+            <h1>Тестування знань</h1>
+            <p>Перевірте свої знання з бінарних дерев та дерев пошуку</p>
+        </div>
+
+        <!-- Селектор модулів -->
+        <div class="module-selector">
+            <h2>Оберіть модуль для тестування</h2>
+            <div class="module-buttons">
+                <button class="module-btn active" data-module="1">
+                    <div class="module-btn-icon">📚</div>
+                    <div class="module-btn-title">Модуль 1: Основи</div>
+                </button>
+                <button class="module-btn" data-module="2">
+                    <div class="module-btn-icon">🌲</div>
+                    <div class="module-btn-title">Модуль 2: Бінарні дерева</div>
+                </button>
+                <button class="module-btn" data-module="3">
+                    <div class="module-btn-icon">🔍</div>
+                    <div class="module-btn-title">Модуль 3: BST</div>
+                </button>
+                <button class="module-btn" data-module="4">
+                    <div class="module-btn-icon">🎯</div>
+                    <div class="module-btn-title">Фінальний тест</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Прогрес тесту -->
+        <div class="test-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text">
+                <span>Питання <span id="currentQuestion">1</span> з <span id="totalQuestions">10</span></span>
+                <span>Правильних відповідей: <span id="correctCount">0</span></span>
+            </div>
+        </div>
+
+        <!-- Контейнер для питань -->
+        <div id="questionsContainer"></div>
+
+        <!-- Кнопки керування -->
+        <div class="test-controls">
+            <button class="btn btn-secondary" id="prevBtn" onclick="previousQuestion()">← Попереднє</button>
+            <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Наступне →</button>
+            <button class="btn btn-primary" id="finishBtn" onclick="finishTest()" style="display: none;">Завершити тест</button>
+        </div>
+    </div>
+
+    <!-- Модальне вікно результатів -->
+    <div class="results-modal" id="resultsModal">
+        <div class="results-content">
+            <div class="results-emoji" id="resultsEmoji">🎉</div>
+            <h2 class="results-title" id="resultsTitle">Вітаємо!</h2>
+            <div class="results-score" id="resultsScore">0/10</div>
+            <p class="results-message" id="resultsMessage">Ви успішно пройшли тест!</p>
+            
+            <div class="results-details">
+                <div class="result-stat">
+                    <div class="result-stat-label">Час проходження</div>
+                    <div class="result-stat-value" id="testTime">0:00</div>
+                </div>
+                <div class="result-stat">
+                    <div class="result-stat-label">Точність</div>
+                    <div class="result-stat-value" id="accuracy">0%</div>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="restartTest()">Спробувати знову</button>
+        </div>
+    </div>
+
+    <script>
+        // База питань для різних модулів
+        const questionDatabase = {
+            1: [ // Модуль 1: Основи
+                {
+                    question: "Що таке дерево в інформатиці?",
+                    options: [
+                        "Лінійна структура даних",
+                        "Ієрархічна структура даних",
+                        "Циклічна структура даних",
+                        "Випадкова структура даних"
+                    ],
+                    correct: 1,
+                    explanation: "Дерево — це ієрархічна структура даних, що складається з вузлів, з'єднаних ребрами, без циклів."
+                },
+                {
+                    question: "Який вузол не має батьківського вузла?",
+                    options: [
+                        "Лист",
+                        "Внутрішній вузол",
+                        "Корінь",
+                        "Нащадок"
+                    ],
+                    correct: 2,
+                    explanation: "Корінь — це єдиний вузол дерева, який не має батьківського вузла."
+                },
+                {
+                    question: "Що таке висота дерева?",
+                    options: [
+                        "Кількість вузлів",
+                        "Кількість листів",
+                        "Максимальна відстань від кореня до листа",
+                        "Кількість рівнів"
+                    ],
+                    correct: 2,
+                    explanation: "Висота дерева — це максимальна відстань (кількість ребер) від кореня до найвіддаленішого листа."
+                }
+            ],
+            2: [ // Модуль 2: Бінарні дерева
+                {
+                    question: "Яка максимальна кількість нащадків може мати вузол у бінарному дереві?",
+                    options: ["1", "2", "3", "Необмежена"],
+                    correct: 1,
+                    explanation: "У бінарному дереві кожен вузол може мати максимум 2 нащадки: лівого та правого."
+                },
+                {
+                    question: "Який результат центрованого обходу BST?",
+                    code: `      5
+     / \\
+    3   8
+   / \\   \\
+  1   4   9`,
+                    options: [
+                        "5, 3, 1, 4, 8, 9",
+                        "1, 3, 4, 5, 8, 9",
+                        "1, 4, 3, 9, 8, 5",
+                        "5, 3, 8, 1, 4, 9"
+                    ],
+                    correct: 1,
+                    explanation: "Центрований обхід BST завжди дає відсортовану послідовність значень."
+                }
+            ],
+            3: [ // Модуль 3: BST
+                {
+                    question: "Яка часова складність пошуку в збалансованому BST?",
+                    options: ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+                    correct: 1,
+                    explanation: "У збалансованому BST висота дерева O(log n), тому пошук також має складність O(log n)."
+                }
+            ],
+            4: [ // Фінальний тест
+                {
+                    question: "Скільки різних бінарних дерев можна побудувати з 3 вузлів?",
+                    options: ["3", "5", "7", "9"],
+                    correct: 1,
+                    explanation: "З 3 вузлів можна побудувати 5 різних структур бінарних дерев (число Каталана)."
+                }
+            ]
+        };
+
+        // Глобальні змінні
+        let currentModule = 1;
+        let currentQuestionIndex = 0;
+        let answers = [];
+        let startTime = Date.now();
+
+        // Ініціалізація
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeTest();
+            
+            // Обробники для кнопок модулів
+            document.querySelectorAll('.module-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.module-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentModule = parseInt(btn.dataset.module);
+                    restartTest();
+                });
+            });
+        });
+
+        function initializeTest() {
+            currentQuestionIndex = 0;
+            answers = [];
+            startTime = Date.now();
+            
+            const questions = questionDatabase[currentModule];
+            document.getElementById('totalQuestions').textContent = questions.length;
+            
+            renderQuestions();
+            updateProgress();
+            updateButtons();
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questionsContainer');
+            const questions = questionDatabase[currentModule];
+            
+            container.innerHTML = questions.map((q, index) => `
+                <div class="question-card ${index === currentQuestionIndex ? '' : 'hidden'}" 
+                     id="question-${index}" 
+                     style="${index === currentQuestionIndex ? '' : 'display: none;'}">
+                    <span class="question-number">Питання ${index + 1}</span>
+                    <h3 class="question-text">${q.question}</h3>
+                    ${q.code ? `<pre class="code-block">${q.code}</pre>` : ''}
+                    <div class="options">
+                        ${q.options.map((option, optionIndex) => `
+                            <div class="option" onclick="selectAnswer(${index}, ${optionIndex})">
+                                <div class="option-label">
+                                    <span class="option-marker">${String.fromCharCode(65 + optionIndex)}</span>
+                                    <span>${option}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="explanation" id="explanation-${index}">
+                        <strong>Пояснення:</strong> ${q.explanation}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectAnswer(questionIndex, optionIndex) {
+            const questions = questionDatabase[currentModule];
+            const question = questions[questionIndex];
+            const card = document.getElementById(`question-${questionIndex}`);
+            const options = card.querySelectorAll('.option');
+            const explanation = document.getElementById(`explanation-${questionIndex}`);
+            
+            // Зберігаємо відповідь
+            answers[questionIndex] = optionIndex;
+            
+            // Очищаємо попередній вибір
+            options.forEach(opt => {
+                opt.classList.remove('selected', 'correct', 'incorrect');
+            });
+            
+            // Позначаємо вибрану відповідь
+            options[optionIndex].classList.add('selected');
+            
+            // Показуємо правильну/неправильну відповідь
+            if (optionIndex === question.correct) {
+                options[optionIndex].classList.add('correct');
+                card.classList.add('correct');
+                card.classList.remove('incorrect');
+            } else {
+                options[optionIndex].classList.add('incorrect');
+                options[question.correct].classList.add('correct');
+                card.classList.add('incorrect');
+                card.classList.remove('correct');
+            }
+            
+            // Показуємо пояснення
+            explanation.classList.add('show');
+            
+            // Оновлюємо прогрес
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const questions = questionDatabase[currentModule];
+            const answered = answers.filter(a => a !== undefined).length;
+            const correct = answers.filter((a, i) => a === questions[i].correct).length;
+            
+            document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+            document.getElementById('correctCount').textContent = correct;
+            document.getElementById('progressFill').style.width = `${(answered / questions.length) * 100}%`;
+        }
+
+        function updateButtons() {
+            const questions = questionDatabase[currentModule];
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const finishBtn = document.getElementById('finishBtn');
+            
+            prevBtn.disabled = currentQuestionIndex === 0;
+            
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.style.display = 'none';
+                finishBtn.style.display = 'inline-block';
+            } else {
+                nextBtn.style.display = 'inline-block';
+                finishBtn.style.display = 'none';
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                document.getElementById(`question-${currentQuestionIndex}`).style.display = 'none';
+                currentQuestionIndex--;
+                document.getElementById(`question-${currentQuestionIndex}`).style.display = 'block';
+                updateButtons();
+            }
+        }
+
+        function nextQuestion() {
+            const questions = questionDatabase[currentModule];
+            if (currentQuestionIndex < questions.length - 1) {
+                document.getElementById(`question-${currentQuestionIndex}`).style.display = 'none';
+                currentQuestionIndex++;
+                document.getElementById(`question-${currentQuestionIndex}`).style.display = 'block';
+                updateButtons();
+            }
+        }
+
+        function finishTest() {
+            const questions = questionDatabase[currentModule];
+            const correct = answers.filter((a, i) => a === questions[i].correct).length;
+            const total = questions.length;
+            const percentage = Math.round((correct / total) * 100);
+            const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+            
+            // Визначаємо емоджі та повідомлення
+            let emoji, title, message;
+            if (percentage >= 90) {
+                emoji = '🏆';
+                title = 'Відмінно!';
+                message = 'Ви чудово розумієте матеріал!';
+            } else if (percentage >= 70) {
+                emoji = '🎉';
+                title = 'Добре!';
+                message = 'Гарний результат, але є простір для вдосконалення.';
+            } else if (percentage >= 50) {
+                emoji = '👍';
+                title = 'Непогано!';
+                message = 'Рекомендуємо повторити матеріал.';
+            } else {
+                emoji = '📚';
+                title = 'Потрібна практика';
+                message = 'Перегляньте теоретичний матеріал ще раз.';
+            }
+            
+            // Відображаємо результати
+            document.getElementById('resultsEmoji').textContent = emoji;
+            document.getElementById('resultsTitle').textContent = title;
+            document.getElementById('resultsScore').textContent = `${correct}/${total}`;
+            document.getElementById('resultsMessage').textContent = message;
+            document.getElementById('testTime').textContent = `${Math.floor(timeTaken / 60)}:${(timeTaken % 60).toString().padStart(2, '0')}`;
+            document.getElementById('accuracy').textContent = `${percentage}%`;
+            
+            document.getElementById('resultsModal').classList.add('show');
+        }
+
+        function restartTest() {
+            document.getElementById('resultsModal').classList.remove('show');
+            initializeTest();
+        }
+    </script>
+</body>
+</html>

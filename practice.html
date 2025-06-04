@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Практика - Бінарні дерева</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --secondary: #3b82f6;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --text: #374151;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--light);
+        }
+
+        /* Навігація */
+        nav {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--primary);
+        }
+
+        /* Контейнер практики */
+        .practice-container {
+            max-width: 1200px;
+            margin: 100px auto 50px;
+            padding: 0 2rem;
+        }
+
+        .practice-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .practice-header h1 {
+            font-size: 2.5rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        /* Фільтри завдань */
+        .task-filters {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 3rem;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .filter-btn {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--light);
+            background: white;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .filter-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .filter-btn.active {
+            background: var(--gradient);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* Картки завдань */
+        .tasks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .task-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .task-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .task-difficulty {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.25rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .difficulty-easy {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .difficulty-medium {
+            background: #fed7aa;
+            color: #92400e;
+        }
+
+        .difficulty-hard {
+            background: #fecaca;
+            color: #991b1b;
+        }
+
+        .task-title {
+            font-size: 1.25rem;
+            color: var(--dark);
+            margin-bottom: 1rem;
+            padding-right: 100px;
+        }
+
+        .task-description {
+            color: var(--text);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .task-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .task-tag {
+            background: var(--light);
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .task-button {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--gradient);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .task-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Кодовий редактор */
+        .code-editor-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 2rem;
+        }
+
+        .code-editor-modal.show {
+            display: flex;
+        }
+
+        .code-editor-container {
+            background: white;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 900px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .editor-header {
+            padding: 1.5rem 2rem;
+            background: var(--gradient);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editor-header h3 {
+            font-size: 1.25rem;
+        }
+
+        .close-editor {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .close-editor:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .editor-body {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            overflow: hidden;
+        }
+
+        .editor-section {
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .editor-section:first-child {
+            border-right: 1px solid var(--light);
+        }
+
+        .section-title {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .code-textarea {
+            width: 100%;
+            height: 300px;
+            padding: 1rem;
+            border: 2px solid var(--light);
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            font-size: 14px;
+        }
+
+        .run-button {
+            padding: 0.5rem 1.5rem;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .run-button:hover {
+            background: #059669;
+        }
+
+        .output-area {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 1rem;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            min-height: 200px;
+            white-space: pre-wrap;
+        }
+
+        .test-results {
+            margin-top: 1rem;
+        }
+
+        .test-case {
+            background: var(--light);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .test-case.passed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .test-case.failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Проектні завдання */
+        .projects-section {
+            margin-top: 4rem;
+        }
+
+        .projects-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .projects-header h2 {
+            font-size: 2rem;
+            color: var(--dark);
+            margin-bottom: 1rem;
+        }
+
+        .project-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 3rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .project-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .project-title {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .project-description {
+            font-size: 1.125rem;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+        }
+
+        .project-requirements {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .project-requirements h4 {
+            margin-bottom: 1rem;
+        }
+
+        .project-requirements ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .project-requirements li {
+            padding-left: 1.5rem;
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+
+        .project-requirements li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .start-project-btn {
+            background: white;
+            color: var(--primary);
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.125rem;
+        }
+
+        .start-project-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Адаптивність */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .tasks-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .editor-body {
+                grid-template-columns: 1fr;
+            }
+
+            .editor-section:first-child {
+                border-right: none;
+                border-bottom: 1px solid var(--light);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Навігація -->
+    <nav>
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <span>🌳</span>
+                <span>Binary Trees</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Головна</a></li>
+                <li><a href="theory.html">Теорія</a></li>
+                <li><a href="practice.html" class="active">Практика</a></li>
+                <li><a href="tests.html">Тести</a></li>
+                <li><a href="visualizer.html">Візуалізатор</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Контейнер практики -->
+    <div class="practice-container">
+        <div class="practice-header">
+            <h1>Практичні завдання</h1>
+            <p>Закріпіть свої знання через вирішення задач різної складності</p>
+        </div>
+
+        <!-- Фільтри -->
+        <div class="task-filters">
+            <h3 style="text-align: center; margin-bottom: 1.5rem;">Оберіть рівень складності</h3>
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterTasks('all')">Всі завдання</button>
+                <button class="filter-btn" onclick="filterTasks('easy')">Легкі</button>
+                <button class="filter-btn" onclick="filterTasks('medium')">Середні</button>
+                <button class="filter-btn" onclick="filterTasks('hard')">Складні</button>
+            </div>
+        </div>
+
+        <!-- Завдання -->
+        <div class="tasks-grid" id="tasksGrid">
+            <!-- Легке завдання 1 -->
+            <div class="task-card" data-difficulty="easy">
+                <span class="task-difficulty difficulty-easy">Легке</span>
+                <h3 class="task-title">Підрахунок вузлів</h3>
+                <p class="task-description">
+                    Напишіть функцію, яка підраховує загальну кількість вузлів у бінарному дереві.
+                </p>
+                <div class="task-tags">
+                    <span class="task-tag">Рекурсія</span>
+                    <span class="task-tag">Обхід дерева</span>
+                </div>
+                <button class="task-button" onclick="openTask('count-nodes')">Розпочати</button>
+            </div>
+
+            <!-- Легке завдання 2 -->
+            <div class="task-card" data-difficulty="easy">
+                <span class="task-difficulty difficulty-easy">Легке</span>
+                <h3 class="task-title">Знайти висоту дерева</h3>
+                <p class="task-description">
+                    Реалізуйте функцію для визначення висоти бінарного дерева. Висота порожнього дерева = -1.
+                </p>
+                <div class="task-tags">
+                    <span class="task-tag">Рекурсія</span>
+                    <span class="task-tag">Базові операції</span>
+                </div>
+                <button class="task-button" onclick="openTask('tree-height')">Розпочати</button>
+            </div>
+
+            <!-- Середнє завдання 1 -->
+            <div class="task-card" data-difficulty="medium">
+                <span class="task-difficulty difficulty-medium">Середнє</span>
+                <h3 class="task-title">Вставка в BST</h3>
+                <p class="task-description">
+                    Напишіть функцію для вставки нового значення в бінарне дерево пошуку, зберігаючи його властивості.
+                </p>
+                <div class="task-tags">
+                    <span class="task-tag">BST</span>
+                    <span class="task-tag">Вставка</span>
+                    <span class="task-tag">Рекурсія</span>
+                </div>
+                <button class="task-button" onclick="openTask('bst-insert')">Розпочати</button>
+            </div>
+
+            <!-- Середнє завдання 2 -->
+            <div class="task-card" data-difficulty="medium">
+                <span class="task-difficulty difficulty-medium">Середнє</span>
+                <h3 class="task-title">Перевірка BST</h3>
+                <p class="task-description">
+                    Визначте, чи є дане бінарне дерево правильним бінарним деревом пошуку.
+                </p>
+                <div class="task-tags">
+                    <span class="task-tag">BST</span>
+                    <span class="task-tag">Валідація</span>
+                </div>
+                <button class="task-button" onclick="openTask('validate-bst')">Розпочати</button>
+            </div>
+
+            <!-- Складне завдання 1 -->
+            <div class="task-card" data-difficulty="hard">
+                <span class="task-difficulty difficulty-hard">Складне</span>
+                <h3 class="task-title">Видалення з BST</h3>
+                <p class="task-description">
+                    Реалізуйте повний алгоритм видалення вузла з BST, враховуючи всі три випадки.
+                </p>
+                <div class="task-tags">
+                    <span class="task-tag">BST</span>
+                    <span class="task-tag">Видалення</span>
+                    <span class="task-tag">Складні операції</span>
+                </div>
+                <button class="task-button" onclick="openTask('bst-delete')">Розпочати</button>
+            </div>
+
+            <!-- Складне завдання 2 -->
+            <div class="task-card" data-difficulty="hard">
+                <span class="task-difficulty difficulty-hard">Складне</span>
+                <h3 class="task-title">Серіалізація дерева</h3>
+                <p class="task-description">
+                    Напишіть функції для серіалізації та десеріалізації бінарного дерева у/з рядка.
+                </p>
+                <div class="task-tags">
+                    <span class="task-tag">Серіалізація</span>
+                    <span class="task-tag">Обхід</span>
+                    <span class="task-tag">Складні структури</span>
+                </div>
+                <button class="task-button" onclick="openTask('serialize-tree')">Розпочати</button>
+            </div>
+        </div>
+
+        <!-- Проектні завдання -->
+        <div class="projects-section">
+            <div class="projects-header">
+                <h2>🚀 Проектні завдання</h2>
+                <p>Створіть повноцінні застосунки, використовуючи знання про дерева</p>
+            </div>
+
+            <div class="project-card">
+                <div class="project-content">
+                    <h3 class="project-title">📁 Файловий менеджер</h3>
+                    <p class="project-description">
+                        Розробіть систему управління файлами та папками, використовуючи деревоподібну структуру. 
+                        Реалізуйте операції створення, видалення, переміщення та пошуку файлів.
+                    </p>
+                    <div class="project-requirements">
+                        <h4>Вимоги до проекту:</h4>
+                        <ul>
+                            <li>Візуалізація файлової структури</li>
+                            <li>Операції CRUD для файлів і папок</li>
+                            <li>Пошук за назвою та розміром</li>
+                            <li>Підрахунок загального розміру папок</li>
+                            <li>Експорт/імпорт структури</li>
+                        </ul>
+                    </div>
+                    <button class="start-project-btn" onclick="startProject('file-manager')">
+                        Почати проект
+                    </button>
+                </div>
+            </div>
+
+            <div class="project-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                <div class="project-content">
+                    <h3 class="project-title">🎮 Гра "20 питань"</h3>
+                    <p class="project-description">
+                        Створіть інтелектуальну гру, яка вгадує задуманий об'єкт за допомогою бінарного дерева рішень. 
+                        Гра має навчатися з кожної нової відповіді.
+                    </p>
+                    <div class="project-requirements">
+                        <h4>Вимоги до проекту:</h4>
+                        <ul>
+                            <li>Дерево питань з так/ні відповідями</li>
+                            <li>Можливість додавати нові об'єкти</li>
+                            <li>Збереження та завантаження бази знань</li>
+                            <li>Статистика успішності вгадування</li>
+                            <li>Приємний інтерфейс гри</li>
+                        </ul>
+                    </div>
+                    <button class="start-project-btn" onclick="startProject('20-questions')">
+                        Почати проект
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно редактора коду -->
+    <div class="code-editor-modal" id="codeEditorModal">
+        <div class="code-editor-container">
+            <div class="editor-header">
+                <h3 id="taskTitle">Завдання</h3>
+                <button class="close-editor" onclick="closeEditor()">Закрити</button>
+            </div>
+            <div class="editor-body">
+                <div class="editor-section">
+                    <div class="section-title">
+                        <span>Ваш код</span>
+                        <button class="run-button" onclick="runCode()">▶ Запустити</button>
+                    </div>
+                    <textarea id="codeInput" class="code-textarea" placeholder="Напишіть свій код тут..."></textarea>
+                    <div class="section-title" style="margin-top: 1rem;">Виведення</div>
+                    <div class="output-area" id="outputArea"></div>
+                </div>
+                <div class="editor-section">
+                    <div class="section-title">Умова задачі</div>
+                    <div id="taskDescription"></div>
+                    <div class="section-title" style="margin-top: 2rem;">Тестові випадки</div>
+                    <div class="test-results" id="testResults"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // База завдань
+        const tasks = {
+            'count-nodes': {
+                title: 'Підрахунок вузлів',
+                description: `
+                    <h4>Завдання:</h4>
+                    <p>Напишіть функцію <code>countNodes(root)</code>, яка підраховує загальну кількість вузлів у бінарному дереві.</p>
+                    
+                    <h4>Приклад:</h4>
+                    <pre>
+    1
+   / \\
+  2   3
+ / \\
+4   5
+                    </pre>
+                    <p>Результат: 5</p>
+                    
+                    <h4>Підказка:</h4>
+                    <p>Використайте рекурсію: кількість вузлів = 1 (поточний) + вузли лівого піддерева + вузли правого піддерева</p>
+                `,
+                starter: `class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+def countNodes(root):
+    # Ваш код тут
+    pass
+
+# Тестовий приклад
+root = TreeNode(1)
+root.left = TreeNode(2)
+root.right = TreeNode(3)
+root.left.left = TreeNode(4)
+root.left.right = TreeNode(5)
+
+print(countNodes(root))  # Очікується: 5`,
+                tests: [
+                    { input: 'порожнє дерево', expected: 0 },
+                    { input: 'дерево з 1 вузлом', expected: 1 },
+                    { input: 'дерево з 5 вузлами', expected: 5 }
+                ]
+            },
+            'tree-height': {
+                title: 'Знайти висоту дерева',
+                description: `
+                    <h4>Завдання:</h4>
+                    <p>Реалізуйте функцію <code>getHeight(root)</code> для визначення висоти бінарного дерева.</p>
+                    <p>Висота порожнього дерева = -1, висота дерева з одним вузлом = 0.</p>
+                    
+                    <h4>Приклад:</h4>
+                    <pre>
+    1        Висота = 2
+   / \\
+  2   3
+ / \\
+4   5
+                    </pre>
+                `,
+                starter: `class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+def getHeight(root):
+    # Ваш код тут
+    pass
+
+# Тест
+root = TreeNode(1)
+root.left = TreeNode(2)
+root.right = TreeNode(3)
+root.left.left = TreeNode(4)
+root.left.right = TreeNode(5)
+
+print(getHeight(root))  # Очікується: 2`
+            },
+            'bst-insert': {
+                title: 'Вставка в BST',
+                description: `
+                    <h4>Завдання:</h4>
+                    <p>Напишіть функцію <code>insertBST(root, val)</code> для вставки нового значення в BST.</p>
+                    
+                    <h4>Правила BST:</h4>
+                    <ul>
+                        <li>Значення лівого нащадка < значення батька</li>
+                        <li>Значення правого нащадка > значення батька</li>
+                    </ul>
+                    
+                    <h4>Приклад:</h4>
+                    <p>Вставка 6 в дерево:</p>
+                    <pre>
+    4              4
+   / \\            / \\
+  2   7    →     2   7
+ / \\            / \\ /
+1   3          1  3 6
+                    </pre>
+                `,
+                starter: `class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+def insertBST(root, val):
+    # Ваш код тут
+    pass
+
+# Створення BST
+root = TreeNode(4)
+root.left = TreeNode(2)
+root.right = TreeNode(7)
+root.left.left = TreeNode(1)
+root.left.right = TreeNode(3)
+
+# Вставка нового значення
+root = insertBST(root, 6)
+
+# Перевірка (inorder обхід має дати відсортовану послідовність)
+def inorder(node):
+    if node:
+        inorder(node.left)
+        print(node.val, end=' ')
+        inorder(node.right)
+
+inorder(root)  # Очікується: 1 2 3 4 6 7`
+            }
+        };
+
+        // Фільтрація завдань
+        function filterTasks(difficulty) {
+            const buttons = document.querySelectorAll('.filter-btn');
+            const cards = document.querySelectorAll('.task-card');
+            
+            // Оновити активну кнопку
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.toLowerCase().includes(difficulty) || 
+                    (difficulty === 'all' && btn.textContent.includes('Всі'))) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Показати/приховати картки
+            cards.forEach(card => {
+                if (difficulty === 'all' || card.dataset.difficulty === difficulty) {
+                    card.style.display = 'block';
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 10);
+                } else {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    setTimeout(() => {
+                        card.style.display = 'none';
+                    }, 300);
+                }
+            });
+        }
+
+        // Відкрити завдання
+        function openTask(taskId) {
+            const task = tasks[taskId];
+            if (!task) return;
+            
+            document.getElementById('taskTitle').textContent = task.title;
+            document.getElementById('taskDescription').innerHTML = task.description;
+            document.getElementById('codeInput').value = task.starter || '';
+            document.getElementById('outputArea').textContent = '';
+            document.getElementById('testResults').innerHTML = '';
+            
+            // Показати тестові випадки
+            if (task.tests) {
+                const testsHtml = task.tests.map((test, index) => `
+                    <div class="test-case">
+                        <span>Тест ${index + 1}: ${test.input}</span>
+                        <span>Очікується: ${test.expected}</span>
+                    </div>
+                `).join('');
+                document.getElementById('testResults').innerHTML = testsHtml;
+            }
+            
+            document.getElementById('codeEditorModal').classList.add('show');
+        }
+
+        // Закрити редактор
+        function closeEditor() {
+            document.getElementById('codeEditorModal').classList.remove('show');
+        }
+
+        // Запустити код (симуляція)
+        function runCode() {
+            const code = document.getElementById('codeInput').value;
+            const output = document.getElementById('outputArea');
+            
+            // Симуляція виконання
+            output.textContent = 'Виконання коду...\n\n';
+            
+            setTimeout(() => {
+                // Симуляція результату
+                if (code.includes('countNodes') && code.includes('return')) {
+                    output.textContent = '5\n\nКод виконано успішно!';
+                    updateTestResults(true);
+                } else if (code.includes('getHeight') && code.includes('return')) {
+                    output.textContent = '2\n\nКод виконано успішно!';
+                    updateTestResults(true);
+                } else if (code.includes('insertBST') && code.includes('return')) {
+                    output.textContent = '1 2 3 4 6 7\n\nКод виконано успішно!';
+                    updateTestResults(true);
+                } else {
+                    output.textContent = 'Помилка: Перевірте свій код та спробуйте ще раз.';
+                    updateTestResults(false);
+                }
+            }, 1000);
+        }
+
+        // Оновити результати тестів
+        function updateTestResults(passed) {
+            const testCases = document.querySelectorAll('.test-case');
+            testCases.forEach(testCase => {
+                testCase.classList.remove('passed', 'failed');
+                testCase.classList.add(passed ? 'passed' : 'failed');
+            });
+        }
+
+        // Почати проект
+        function startProject(projectId) {
+            alert(`Проект "${projectId}" буде доступний у наступній версії курсу!`);
+        }
+
+        // Закрити модальне вікно при кліку поза ним
+        document.getElementById('codeEditorModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeEditor();
+            }
+        });
+    </script>
+</body>
+</html>

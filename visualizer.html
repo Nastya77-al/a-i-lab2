@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Візуалізатор бінарного дерева</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        input[type="number"] {
+            width: 100px;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button.secondary {
+            background-color: #2196F3;
+        }
+        
+        button.secondary:hover {
+            background-color: #1976D2;
+        }
+        
+        button.danger {
+            background-color: #f44336;
+        }
+        
+        button.danger:hover {
+            background-color: #d32f2f;
+        }
+        
+        #canvas {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto;
+            background-color: #fafafa;
+        }
+        
+        .info {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #e3f2fd;
+            border-radius: 5px;
+            line-height: 1.6;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .stat-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .traversal-result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff3e0;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌳 Візуалізатор бінарного дерева</h1>
+        
+        <div class="controls">
+            <input type="number" id="nodeValue" placeholder="Значення" min="0" max="999">
+            <button onclick="addNode()">Додати вузол</button>
+            <button class="secondary" onclick="generateRandomTree()">Випадкове дерево</button>
+            <button class="danger" onclick="clearTree()">Очистити</button>
+        </div>
+        
+        <div class="controls">
+            <button class="secondary" onclick="traversePreorder()">Прямий обхід</button>
+            <button class="secondary" onclick="traverseInorder()">Центрований обхід</button>
+            <button class="secondary" onclick="traversePostorder()">Зворотний обхід</button>
+        </div>
+        
+        <canvas id="canvas" width="800" height="400"></canvas>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Кількість вузлів</h3>
+                <div class="value" id="nodeCount">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Висота дерева</h3>
+                <div class="value" id="treeHeight">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Кількість листів</h3>
+                <div class="value" id="leafCount">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Тип дерева</h3>
+                <div class="value" id="treeType">Порожнє</div>
+            </div>
+        </div>
+        
+        <div id="traversalResult" class="traversal-result" style="display: none;">
+            <strong>Результат обходу:</strong> <span id="traversalPath"></span>
+        </div>
+        
+        <div class="info">
+            <h3>Як користуватися:</h3>
+            <ul>
+                <li>Введіть число та натисніть "Додати вузол" для додавання елемента</li>
+                <li>Вузли додаються за правилом: менші значення — ліворуч, більші — праворуч</li>
+                <li>Використовуйте кнопки обходу для вивчення різних способів обходу дерева</li>
+                <li>Статистика оновлюється автоматично</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        class TreeNode {
+            constructor(value) {
+                this.value = value;
+                this.left = null;
+                this.right = null;
+            }
+        }
+
+        class BinarySearchTree {
+            constructor() {
+                this.root = null;
+            }
+
+            insert(value) {
+                const newNode = new TreeNode(value);
+                if (!this.root) {
+                    this.root = newNode;
+                } else {
+                    this.insertNode(this.root, newNode);
+                }
+            }
+
+            insertNode(node, newNode) {
+                if (newNode.value < node.value) {
+                    if (!node.left) {
+                        node.left = newNode;
+                    } else {
+                        this.insertNode(node.left, newNode);
+                    }
+                } else {
+                    if (!node.right) {
+                        node.right = newNode;
+                    } else {
+                        this.insertNode(node.right, newNode);
+                    }
+                }
+            }
+
+            getHeight(node = this.root) {
+                if (!node) return 0;
+                return 1 + Math.max(this.getHeight(node.left), this.getHeight(node.right));
+            }
+
+            countNodes(node = this.root) {
+                if (!node) return 0;
+                return 1 + this.countNodes(node.left) + this.countNodes(node.right);
+            }
+
+            countLeaves(node = this.root) {
+                if (!node) return 0;
+                if (!node.left && !node.right) return 1;
+                return this.countLeaves(node.left) + this.countLeaves(node.right);
+            }
+
+            isFullBinaryTree(node = this.root) {
+                if (!node) return true;
+                if (!node.left && !node.right) return true;
+                if (node.left && node.right) {
+                    return this.isFullBinaryTree(node.left) && this.isFullBinaryTree(node.right);
+                }
+                return false;
+            }
+
+            isCompleteBinaryTree() {
+                if (!this.root) return true;
+                const queue = [this.root];
+                let foundNull = false;
+                
+                while (queue.length > 0) {
+                    const node = queue.shift();
+                    
+                    if (!node) {
+                        foundNull = true;
+                    } else {
+                        if (foundNull) return false;
+                        queue.push(node.left);
+                        queue.push(node.right);
+                    }
+                }
+                return true;
+            }
+
+            preorderTraversal(node = this.root, result = []) {
+                if (node) {
+                    result.push(node.value);
+                    this.preorderTraversal(node.left, result);
+                    this.preorderTraversal(node.right, result);
+                }
+                return result;
+            }
+
+            inorderTraversal(node = this.root, result = []) {
+                if (node) {
+                    this.inorderTraversal(node.left, result);
+                    result.push(node.value);
+                    this.inorderTraversal(node.right, result);
+                }
+                return result;
+            }
+
+            postorderTraversal(node = this.root, result = []) {
+                if (node) {
+                    this.postorderTraversal(node.left, result);
+                    this.postorderTraversal(node.right, result);
+                    result.push(node.value);
+                }
+                return result;
+            }
+        }
+
+        const tree = new BinarySearchTree();
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        function drawTree() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (tree.root) {
+                drawNode(tree.root, canvas.width / 2, 50, canvas.width / 4);
+            }
+            updateStats();
+        }
+
+        function drawNode(node, x, y, offset) {
+            // Draw connections first (so they appear behind nodes)
+            if (node.left) {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x - offset, y + 60);
+                ctx.strokeStyle = '#999';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                drawNode(node.left, x - offset, y + 60, offset / 2);
+            }
+            
+            if (node.right) {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + offset, y + 60);
+                ctx.strokeStyle = '#999';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                drawNode(node.right, x + offset, y + 60, offset / 2);
+            }
+            
+            // Draw node
+            ctx.beginPath();
+            ctx.arc(x, y, 25, 0, 2 * Math.PI);
+            ctx.fillStyle = '#4CAF50';
+            ctx.fill();
+            ctx.strokeStyle = '#388E3C';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Draw value
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(node.value, x, y);
+        }
+
+        function addNode() {
+            const input = document.getElementById('nodeValue');
+            const value = parseInt(input.value);
+            
+            if (!isNaN(value)) {
+                tree.insert(value);
+                drawTree();
+                input.value = '';
+                input.focus();
+            }
+        }
+
+        function generateRandomTree() {
+            clearTree();
+            const count = Math.floor(Math.random() * 6) + 5;
+            const values = new Set();
+            
+            while (values.size < count) {
+                values.add(Math.floor(Math.random() * 100));
+            }
+            
+            values.forEach(value => tree.insert(value));
+            drawTree();
+        }
+
+        function clearTree() {
+            tree.root = null;
+            drawTree();
+            document.getElementById('traversalResult').style.display = 'none';
+        }
+
+        function updateStats() {
+            document.getElementById('nodeCount').textContent = tree.countNodes();
+            document.getElementById('treeHeight').textContent = tree.getHeight();
+            document.getElementById('leafCount').textContent = tree.countLeaves();
+            
+            let treeType = 'BST';
+            if (!tree.root) {
+                treeType = 'Порожнє';
+            } else if (tree.isFullBinaryTree()) {
+                treeType = 'Повне BST';
+            } else if (tree.isCompleteBinaryTree()) {
+                treeType = 'Завершене BST';
+            }
+            
+            document.getElementById('treeType').textContent = treeType;
+        }
+
+        function showTraversal(result, type) {
+            const resultDiv = document.getElementById('traversalResult');
+            const pathSpan = document.getElementById('traversalPath');
+            
+            resultDiv.style.display = 'block';
+            pathSpan.textContent = `${type}: ${result.join(' → ')}`;
+        }
+
+        function traversePreorder() {
+            const result = tree.preorderTraversal();
+            showTraversal(result, 'Прямий обхід');
+        }
+
+        function traverseInorder() {
+            const result = tree.inorderTraversal();
+            showTraversal(result, 'Центрований обхід');
+        }
+
+        function traversePostorder() {
+            const result = tree.postorderTraversal();
+            showTraversal(result, 'Зворотний обхід');
+        }
+
+        // Allow Enter key to add node
+        document.getElementById('nodeValue').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addNode();
+            }
+        });
+
+        // Initial draw
+        drawTree();
+    </script>
+</body>
+</html>
